@@ -1,0 +1,2 @@
+defmodule WealthPulse do
+end
