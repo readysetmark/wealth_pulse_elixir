@@ -1,24 +1,33 @@
-# WealthPulse
+# Wealth Pulse
 
-**TODO: Add description**
+Wealth Pulse is a web frontend for a [Ledger][1] journal file, supporting double-entry accounting
+for personal finance tracking. Wealth Pulse only supports a subset of the Ledger journal file.
+
+## How to Run
+
+Just getting started, so still TBD!
+
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed as:
+Also TBD!
 
-  1. Add `wealth_pulse` to your list of dependencies in `mix.exs`:
 
-    ```elixir
-    def deps do
-      [{:wealth_pulse, "~> 0.1.0"}]
-    end
-    ```
+## Tasks
 
-  2. Ensure `wealth_pulse` is started before your application:
+Parsing
+- [ ] Parse pricedb file
+- [ ] Parse ledger file
+- [ ] Autobalance and validate ledger transactions
+- [ ] Parse configuration file
 
-    ```elixir
-    def application do
-      [applications: [:wealth_pulse]]
-    end
-    ```
+Reporting
+- [ ] Balance report
+- [ ] Register report
+- [ ] Networth chart
+- [ ] Receivables and Liabilities
 
+
+
+
+[1]: http://www.ledger-cli.org/
