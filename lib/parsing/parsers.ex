@@ -6,6 +6,19 @@ defmodule WealthPulse.Parsing.Parsers do
   # Whitespace Parsers
 
   @doc """
+  Expects and parses mandatory whitespace (spaces or tabs). Returns :whitespace.
+
+      iex> import WealthPulse.Parsing.Parsers
+      iex> Combine.parse(" ", mandatory_whitespace)
+      [:whitespace]
+      iex> Combine.parse("\t", mandatory_whitespace)
+      [:whitespace]
+      iex> Combine.parse(" \t", mandatory_whitespace)
+      [:whitespace]
+  """
+  def mandatory_whitespace, do: many1(either(space, tab)) |> map(fn _ -> :whitespace end)
+
+  @doc """
   Expects and parses optional whitespace. Returns :whitespace if whitespace was found, otherwise
   returns :no_whitespace. Whitespace here must be a space or tab.
 
