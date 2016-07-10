@@ -3,6 +3,28 @@ defmodule WealthPulse.Parsing.Parsers do
   import Combine.Parsers.Text
   import Combine.Helpers
 
+  # Whitespace Parsers
+
+  @doc """
+  Expects and parses optional whitespace. Returns :whitespace if whitespace was found, otherwise
+  returns :no_whitespace. Whitespace here must be a space or tab.
+
+      iex> import WealthPulse.Parsing.Parsers
+      iex> Combine.parse(" ", optional_whitespace)
+      [:whitespace]
+      iex> Combine.parse("\t", optional_whitespace)
+      [:whitespace]
+      iex> Combine.parse(" \t", optional_whitespace)
+      [:whitespace]
+      iex> Combine.parse("", optional_whitespace)
+      [:no_whitespace]
+  """
+  def optional_whitespace do
+    many(either(space, tab))
+    |> map(fn list when length(list) > 0 -> :whitespace
+              _ -> :no_whitespace end)
+  end
+
   # Date Parsers
 
   @doc """
@@ -18,7 +40,7 @@ defmodule WealthPulse.Parsing.Parsers do
   Expects and parses a 2 digit month.
 
       iex> import WealthPulse.Parsing.Parsers
-      ...> Combine.parse("07", month)
+      iex> Combine.parse("07", month)
       [7]
   """
   def month, do: fixed_integer(2)
@@ -27,7 +49,7 @@ defmodule WealthPulse.Parsing.Parsers do
   Expects and parses a 2 digit day.
 
       iex> import WealthPulse.Parsing.Parsers
-      ...> Combine.parse("09", day)
+      iex> Combine.parse("09", day)
       [9]
   """
   def day, do: fixed_integer(2)
@@ -36,7 +58,7 @@ defmodule WealthPulse.Parsing.Parsers do
   Expects and parses a date.
 
       iex> import WealthPulse.Parsing.Parsers
-      ...> Combine.parse("2016-07-09", date)
+      iex> Combine.parse("2016-07-09", date)
       [{2016, 7, 9}]
   """
   def date do
@@ -56,7 +78,7 @@ defmodule WealthPulse.Parsing.Parsers do
   Expects and parses a quoted symbol.
 
       iex> import WealthPulse.Parsing.Parsers
-      ...> Combine.parse("\"MUTF25\"", quoted_symbol)
+      iex> Combine.parse("\"MUTF25\"", quoted_symbol)
       [{"MUTF25", :quoted}]
   """
   def quoted_symbol do
@@ -120,6 +142,26 @@ defmodule WealthPulse.Parsing.Parsers do
       |> Enum.join
       |> String.replace(",", "")
     end)
+  end
+
+  # Amount Parsers
+
+  @doc """
+  Expects and parses an amount in the form of symbol then quantity.
+
+      iex> import WealthPulse.Parsing.Parsers
+      iex> Combine.parse("$5.82", amount_symbol_then_quantity)
+      [{"5.82", {"$", :non_quoted}, :symbol_left, :no_whitespace}]
+      iex> Combine.parse("$ 5.82", amount_symbol_then_quantity)
+      [{"5.82", {"$", :non_quoted}, :symbol_left, :whitespace}]
+  """
+  def amount_symbol_then_quantity do
+    sequence([
+      symbol,
+      optional_whitespace,
+      quantity
+    ])
+    |> map(fn [symbol, ws, qty] -> {qty, symbol, :symbol_left, ws} end)
   end
 
 end
