@@ -204,4 +204,27 @@ defmodule WealthPulse.Parsing.Parsers do
   """
   def amount, do: either(amount_symbol_then_quantity, amount_quantity_then_symbol)
 
+  # Price Parser
+
+  @doc ~S"""
+  Expects and parses a price entry.
+
+      iex> import WealthPulse.Parsing.Parsers
+      iex> Combine.parse("P 2016-07-10 \"MUTF25\" $5.82", price)
+      [{{2016, 7, 10}, {"MUTF25", :quoted}, {"5.82", {"$", :non_quoted}, :symbol_left,
+      :no_whitespace}}]
+  """
+  def price do
+    sequence([
+      ignore(char("P")),
+      ignore(mandatory_whitespace),
+      date,
+      ignore(mandatory_whitespace),
+      symbol,
+      ignore(mandatory_whitespace),
+      amount
+    ])
+    |> map(fn [date, symbol, amount] -> {date, symbol, amount} end)
+  end
+
 end
