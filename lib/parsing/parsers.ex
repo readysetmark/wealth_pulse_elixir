@@ -227,4 +227,25 @@ defmodule WealthPulse.Parsing.Parsers do
     |> map(fn [date, symbol, amount] -> {date, symbol, amount} end)
   end
 
+  # Price DB Parser
+
+  @doc ~S"""
+  Expects and parses a price DB, which is a list of price entries.
+
+      iex> import WealthPulse.Parsing.Parsers
+      iex> Combine.parse("", price_db)
+      [[]]
+      iex> Combine.parse("P 2016-07-10 \"MUTF25\" $5.82", price_db)
+      [[{{2016, 7, 10}, {"MUTF25", :quoted}, {"5.82", {"$", :non_quoted}, :symbol_left,
+      :no_whitespace}}]]
+      iex> Combine.parse("P 2016-07-09 \"MUTF25\" $5.66\r\nP 2016-07-10 \"MUTF25\" $5.82", price_db)
+      [[
+        {{2016, 7, 9}, {"MUTF25", :quoted}, {"5.66", {"$", :non_quoted}, :symbol_left,
+      :no_whitespace}},
+        {{2016, 7, 10}, {"MUTF25", :quoted}, {"5.82", {"$", :non_quoted}, :symbol_left,
+      :no_whitespace}}
+      ]]
+  """
+  def price_db, do: sep_by(price, newline)
+
 end
