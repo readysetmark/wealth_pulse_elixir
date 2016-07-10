@@ -1,14 +1,13 @@
-defmodule WealthPulse.Parsing.Parsers do
+defmodule WealthPulse.Parse.Parsers do
   import Combine.Parsers.Base
   import Combine.Parsers.Text
-  import Combine.Helpers
 
   # Whitespace Parsers
 
   @doc """
   Expects and parses mandatory whitespace (spaces or tabs). Returns :whitespace.
 
-      iex> import WealthPulse.Parsing.Parsers
+      iex> import WealthPulse.Parse.Parsers
       iex> Combine.parse(" ", mandatory_whitespace)
       [:whitespace]
       iex> Combine.parse("\t", mandatory_whitespace)
@@ -22,7 +21,7 @@ defmodule WealthPulse.Parsing.Parsers do
   Expects and parses optional whitespace. Returns :whitespace if whitespace was found, otherwise
   returns :no_whitespace. Whitespace here must be a space or tab.
 
-      iex> import WealthPulse.Parsing.Parsers
+      iex> import WealthPulse.Parse.Parsers
       iex> Combine.parse(" ", optional_whitespace)
       [:whitespace]
       iex> Combine.parse("\t", optional_whitespace)
@@ -43,7 +42,7 @@ defmodule WealthPulse.Parsing.Parsers do
   @doc """
   Expects and parses a 4 digit date.
 
-      iex> import WealthPulse.Parsing.Parsers
+      iex> import WealthPulse.Parse.Parsers
       ...> Combine.parse("2016", year)
       [2016]
   """
@@ -52,7 +51,7 @@ defmodule WealthPulse.Parsing.Parsers do
   @doc """
   Expects and parses a 2 digit month.
 
-      iex> import WealthPulse.Parsing.Parsers
+      iex> import WealthPulse.Parse.Parsers
       iex> Combine.parse("07", month)
       [7]
   """
@@ -61,7 +60,7 @@ defmodule WealthPulse.Parsing.Parsers do
   @doc """
   Expects and parses a 2 digit day.
 
-      iex> import WealthPulse.Parsing.Parsers
+      iex> import WealthPulse.Parse.Parsers
       iex> Combine.parse("09", day)
       [9]
   """
@@ -70,7 +69,7 @@ defmodule WealthPulse.Parsing.Parsers do
   @doc """
   Expects and parses a date.
 
-      iex> import WealthPulse.Parsing.Parsers
+      iex> import WealthPulse.Parse.Parsers
       iex> Combine.parse("2016-07-09", date)
       [{2016, 7, 9}]
   """
@@ -90,7 +89,7 @@ defmodule WealthPulse.Parsing.Parsers do
   @doc ~S"""
   Expects and parses a quoted symbol.
 
-      iex> import WealthPulse.Parsing.Parsers
+      iex> import WealthPulse.Parse.Parsers
       iex> Combine.parse("\"MUTF25\"", quoted_symbol)
       [{"MUTF25", :quoted}]
   """
@@ -106,7 +105,7 @@ defmodule WealthPulse.Parsing.Parsers do
   @doc """
   Expects and parses a non-quoted symbol.
 
-      iex> import WealthPulse.Parsing.Parsers
+      iex> import WealthPulse.Parse.Parsers
       iex> Combine.parse("AAPL", non_quoted_symbol)
       [{"AAPL", :non_quoted}]
       iex> Combine.parse("$", non_quoted_symbol)
@@ -120,7 +119,7 @@ defmodule WealthPulse.Parsing.Parsers do
   @doc ~S"""
   Expects and parses a quoted or non-quoted symbol.
 
-      iex> import WealthPulse.Parsing.Parsers
+      iex> import WealthPulse.Parse.Parsers
       iex> Combine.parse("$", symbol)
       [{"$", :non_quoted}]
       iex> Combine.parse("\"MUTF25\"", symbol)
@@ -133,7 +132,7 @@ defmodule WealthPulse.Parsing.Parsers do
   @doc """
   Expects and parses a quantity. Negative quantities should have a leading '-'.
 
-      iex> import WealthPulse.Parsing.Parsers
+      iex> import WealthPulse.Parse.Parsers
       iex> Combine.parse("4,231.51", quantity)
       ["4231.51"]
       iex> Combine.parse("-45.22", quantity)
@@ -160,7 +159,7 @@ defmodule WealthPulse.Parsing.Parsers do
   @doc """
   Expects and parses an amount in the form of symbol then quantity.
 
-      iex> import WealthPulse.Parsing.Parsers
+      iex> import WealthPulse.Parse.Parsers
       iex> Combine.parse("$5.82", amount_symbol_then_quantity)
       [{"5.82", {"$", :non_quoted}, :symbol_left, :no_whitespace}]
       iex> Combine.parse("$ 5.82", amount_symbol_then_quantity)
@@ -178,7 +177,7 @@ defmodule WealthPulse.Parsing.Parsers do
   @doc ~S"""
   Expects and parses an amount in the form of quantity then symbol.
 
-      iex> import WealthPulse.Parsing.Parsers
+      iex> import WealthPulse.Parse.Parsers
       iex> Combine.parse("5.82 \"MUTF25\"", amount_quantity_then_symbol)
       [{"5.82", {"MUTF25", :quoted}, :symbol_right, :whitespace}]
       iex> Combine.parse("5.82\"MUTF25\"", amount_quantity_then_symbol)
@@ -196,7 +195,7 @@ defmodule WealthPulse.Parsing.Parsers do
   @doc ~S"""
   Expects and parses an amount containing a symbol and quantity.
 
-      iex> import WealthPulse.Parsing.Parsers
+      iex> import WealthPulse.Parse.Parsers
       iex> Combine.parse("$5.82", amount)
       [{"5.82", {"$", :non_quoted}, :symbol_left, :no_whitespace}]
       iex> Combine.parse("5.82 \"MUTF25\"", amount)
@@ -209,7 +208,7 @@ defmodule WealthPulse.Parsing.Parsers do
   @doc ~S"""
   Expects and parses a price entry.
 
-      iex> import WealthPulse.Parsing.Parsers
+      iex> import WealthPulse.Parse.Parsers
       iex> Combine.parse("P 2016-07-10 \"MUTF25\" $5.82", price)
       [{{2016, 7, 10}, {"MUTF25", :quoted}, {"5.82", {"$", :non_quoted}, :symbol_left,
       :no_whitespace}}]
@@ -232,7 +231,7 @@ defmodule WealthPulse.Parsing.Parsers do
   @doc ~S"""
   Expects and parses a price DB, which is a list of price entries.
 
-      iex> import WealthPulse.Parsing.Parsers
+      iex> import WealthPulse.Parse.Parsers
       iex> Combine.parse("", price_db)
       [[]]
       iex> Combine.parse("P 2016-07-10 \"MUTF25\" $5.82", price_db)
