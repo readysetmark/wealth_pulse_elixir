@@ -28,6 +28,7 @@ defmodule WealthPulse.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    [{:combine, "~> 0.9.1"}]
+    [{:combine, "~> 0.9.1"},
+     {:decimal, "~> 1.1"}]
   end
 end

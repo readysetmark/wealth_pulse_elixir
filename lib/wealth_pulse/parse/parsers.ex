@@ -137,9 +137,9 @@ defmodule WealthPulse.Parse.Parsers do
 
       iex> import WealthPulse.Parse.Parsers
       iex> Combine.parse("4,231.51", quantity)
-      ["4231.51"]
+      [Decimal.new("4231.51")]
       iex> Combine.parse("-45.22", quantity)
-      ["-45.22"]
+      [Decimal.new("-45.22")]
   """
   def quantity do
     sequence([
@@ -154,6 +154,7 @@ defmodule WealthPulse.Parse.Parsers do
       |> List.flatten
       |> Enum.join
       |> String.replace(",", "")
+      |> Decimal.new
     end)
   end
 
@@ -164,9 +165,9 @@ defmodule WealthPulse.Parse.Parsers do
 
       iex> import WealthPulse.Parse.Parsers
       iex> Combine.parse("$5.82", amount_symbol_then_quantity)
-      [{"5.82", {"$", :non_quoted}, :symbol_left, :no_whitespace}]
+      [{Decimal.new("5.82"), {"$", :non_quoted}, :symbol_left, :no_whitespace}]
       iex> Combine.parse("$ 5.82", amount_symbol_then_quantity)
-      [{"5.82", {"$", :non_quoted}, :symbol_left, :whitespace}]
+      [{Decimal.new("5.82"), {"$", :non_quoted}, :symbol_left, :whitespace}]
   """
   def amount_symbol_then_quantity do
     sequence([
@@ -182,9 +183,9 @@ defmodule WealthPulse.Parse.Parsers do
 
       iex> import WealthPulse.Parse.Parsers
       iex> Combine.parse("5.82 \"MUTF25\"", amount_quantity_then_symbol)
-      [{"5.82", {"MUTF25", :quoted}, :symbol_right, :whitespace}]
+      [{Decimal.new("5.82"), {"MUTF25", :quoted}, :symbol_right, :whitespace}]
       iex> Combine.parse("5.82\"MUTF25\"", amount_quantity_then_symbol)
-      [{"5.82", {"MUTF25", :quoted}, :symbol_right, :no_whitespace}]
+      [{Decimal.new("5.82"), {"MUTF25", :quoted}, :symbol_right, :no_whitespace}]
   """
   def amount_quantity_then_symbol do
     sequence([
@@ -200,9 +201,9 @@ defmodule WealthPulse.Parse.Parsers do
 
       iex> import WealthPulse.Parse.Parsers
       iex> Combine.parse("$5.82", amount)
-      [{"5.82", {"$", :non_quoted}, :symbol_left, :no_whitespace}]
+      [{Decimal.new("5.82"), {"$", :non_quoted}, :symbol_left, :no_whitespace}]
       iex> Combine.parse("5.82 \"MUTF25\"", amount)
-      [{"5.82", {"MUTF25", :quoted}, :symbol_right, :whitespace}]
+      [{Decimal.new("5.82"), {"MUTF25", :quoted}, :symbol_right, :whitespace}]
   """
   def amount, do: either(amount_symbol_then_quantity, amount_quantity_then_symbol)
 
@@ -213,8 +214,8 @@ defmodule WealthPulse.Parse.Parsers do
 
       iex> import WealthPulse.Parse.Parsers
       iex> Combine.parse("P 2016-07-10 \"MUTF25\" $5.82", price)
-      [{~D[2016-07-10], {"MUTF25", :quoted}, {"5.82", {"$", :non_quoted}, :symbol_left,
-      :no_whitespace}}]
+      [{~D[2016-07-10], {"MUTF25", :quoted}, {Decimal.new("5.82"), {"$", :non_quoted},
+      :symbol_left, :no_whitespace}}]
   """
   def price do
     sequence([
@@ -238,14 +239,14 @@ defmodule WealthPulse.Parse.Parsers do
       iex> Combine.parse("", price_db)
       [[]]
       iex> Combine.parse("P 2016-07-10 \"MUTF25\" $5.82", price_db)
-      [[{~D[2016-07-10], {"MUTF25", :quoted}, {"5.82", {"$", :non_quoted}, :symbol_left,
-      :no_whitespace}}]]
+      [[{~D[2016-07-10], {"MUTF25", :quoted}, {Decimal.new("5.82"), {"$", :non_quoted},
+      :symbol_left, :no_whitespace}}]]
       iex> Combine.parse("P 2016-07-09 \"MUTF25\" $5.66\r\nP 2016-07-10 \"MUTF25\" $5.82", price_db)
       [[
-        {~D[2016-07-09], {"MUTF25", :quoted}, {"5.66", {"$", :non_quoted}, :symbol_left,
-      :no_whitespace}},
-        {~D[2016-07-10], {"MUTF25", :quoted}, {"5.82", {"$", :non_quoted}, :symbol_left,
-      :no_whitespace}}
+        {~D[2016-07-09], {"MUTF25", :quoted}, {Decimal.new("5.66"), {"$", :non_quoted},
+        :symbol_left, :no_whitespace}},
+        {~D[2016-07-10], {"MUTF25", :quoted}, {Decimal.new("5.82"), {"$", :non_quoted},
+        :symbol_left, :no_whitespace}}
       ]]
   """
   def price_db, do: sep_by(price, newline)
