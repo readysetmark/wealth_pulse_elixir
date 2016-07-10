@@ -50,4 +50,22 @@ defmodule WealthPulse.Parsing.Parsers do
     |> map(fn [year, month, day] -> {year, month, day} end)
   end
 
+  # Symbol Parsers
+
+  @doc ~S"""
+  Expects and parses a quoted symbol.
+
+      iex> import WealthPulse.Parsing.Parsers
+      ...> Combine.parse("\"MUTF25\"", quoted_symbol)
+      [{"MUTF25", :quoted}]
+  """
+  def quoted_symbol do
+    sequence([
+      ignore(char("\"")),
+      many1(satisfy(char, fn c -> !(c in String.codepoints("\"\r\n")) end)),
+      ignore(char("\""))
+    ])
+    |> map(fn chars -> {Enum.join(chars), :quoted} end)
+  end
+
 end
