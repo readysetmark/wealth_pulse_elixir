@@ -113,9 +113,7 @@ defmodule WealthPulse.Parsing.Parsers do
       iex> Combine.parse("\"MUTF25\"", symbol)
       [{"MUTF25", :quoted}]
   """
-  def symbol do
-    either(quoted_symbol, non_quoted_symbol)
-  end
+  def symbol, do: either(quoted_symbol, non_quoted_symbol)
 
   # Quantity parsers
 
@@ -163,5 +161,34 @@ defmodule WealthPulse.Parsing.Parsers do
     ])
     |> map(fn [symbol, ws, qty] -> {qty, symbol, :symbol_left, ws} end)
   end
+
+  @doc ~S"""
+  Expects and parses an amount in the form of quantity then symbol.
+
+      iex> import WealthPulse.Parsing.Parsers
+      iex> Combine.parse("5.82 \"MUTF25\"", amount_quantity_then_symbol)
+      [{"5.82", {"MUTF25", :quoted}, :symbol_right, :whitespace}]
+      iex> Combine.parse("5.82\"MUTF25\"", amount_quantity_then_symbol)
+      [{"5.82", {"MUTF25", :quoted}, :symbol_right, :no_whitespace}]
+  """
+  def amount_quantity_then_symbol do
+    sequence([
+      quantity,
+      optional_whitespace,
+      symbol
+    ])
+    |> map(fn [qty, ws, symbol] -> {qty, symbol, :symbol_right, ws} end)
+  end
+
+  @doc ~S"""
+  Expects and parses an amount containing a symbol and quantity.
+
+      iex> import WealthPulse.Parsing.Parsers
+      iex> Combine.parse("$5.82", amount)
+      [{"5.82", {"$", :non_quoted}, :symbol_left, :no_whitespace}]
+      iex> Combine.parse("5.82 \"MUTF25\"", amount)
+      [{"5.82", {"MUTF25", :quoted}, :symbol_right, :whitespace}]
+  """
+  def amount, do: either(amount_symbol_then_quantity, amount_quantity_then_symbol)
 
 end
