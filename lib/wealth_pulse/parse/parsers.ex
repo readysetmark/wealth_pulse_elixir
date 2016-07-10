@@ -71,7 +71,7 @@ defmodule WealthPulse.Parse.Parsers do
 
       iex> import WealthPulse.Parse.Parsers
       iex> Combine.parse("2016-07-09", date)
-      [{2016, 7, 9}]
+      [~D[2016-07-09]]
   """
   def date do
     sequence([
@@ -81,7 +81,10 @@ defmodule WealthPulse.Parse.Parsers do
       ignore(char("-")),
       day
     ])
-    |> map(fn [year, month, day] -> {year, month, day} end)
+    |> map(fn [y, m, d] ->
+      {:ok, date} = Date.new(y, m, d)
+      date
+    end)
   end
 
   # Symbol Parsers
@@ -210,7 +213,7 @@ defmodule WealthPulse.Parse.Parsers do
 
       iex> import WealthPulse.Parse.Parsers
       iex> Combine.parse("P 2016-07-10 \"MUTF25\" $5.82", price)
-      [{{2016, 7, 10}, {"MUTF25", :quoted}, {"5.82", {"$", :non_quoted}, :symbol_left,
+      [{~D[2016-07-10], {"MUTF25", :quoted}, {"5.82", {"$", :non_quoted}, :symbol_left,
       :no_whitespace}}]
   """
   def price do
@@ -235,13 +238,13 @@ defmodule WealthPulse.Parse.Parsers do
       iex> Combine.parse("", price_db)
       [[]]
       iex> Combine.parse("P 2016-07-10 \"MUTF25\" $5.82", price_db)
-      [[{{2016, 7, 10}, {"MUTF25", :quoted}, {"5.82", {"$", :non_quoted}, :symbol_left,
+      [[{~D[2016-07-10], {"MUTF25", :quoted}, {"5.82", {"$", :non_quoted}, :symbol_left,
       :no_whitespace}}]]
       iex> Combine.parse("P 2016-07-09 \"MUTF25\" $5.66\r\nP 2016-07-10 \"MUTF25\" $5.82", price_db)
       [[
-        {{2016, 7, 9}, {"MUTF25", :quoted}, {"5.66", {"$", :non_quoted}, :symbol_left,
+        {~D[2016-07-09], {"MUTF25", :quoted}, {"5.66", {"$", :non_quoted}, :symbol_left,
       :no_whitespace}},
-        {{2016, 7, 10}, {"MUTF25", :quoted}, {"5.82", {"$", :non_quoted}, :symbol_left,
+        {~D[2016-07-10], {"MUTF25", :quoted}, {"5.82", {"$", :non_quoted}, :symbol_left,
       :no_whitespace}}
       ]]
   """
