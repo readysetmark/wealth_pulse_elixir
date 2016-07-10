@@ -95,4 +95,31 @@ defmodule WealthPulse.Parsing.Parsers do
     either(quoted_symbol, non_quoted_symbol)
   end
 
+  # Quantity parsers
+
+  @doc """
+  Expects and parses a quantity. Negative quantities should have a leading '-'.
+
+      iex> import WealthPulse.Parsing.Parsers
+      iex> Combine.parse("4,231.51", quantity)
+      ["4231.51"]
+      iex> Combine.parse("-45.22", quantity)
+      ["-45.22"]
+  """
+  def quantity do
+    sequence([
+      option(char("-"))
+      |> map(fn "-" -> "-"
+                _ -> "" end),
+      satisfy(char, fn c -> c in String.codepoints("0123456789") end),
+      many(satisfy(char, fn c -> c in String.codepoints("0123456789,.") end))
+    ])
+    |> map(fn list ->
+      list
+      |> List.flatten
+      |> Enum.join
+      |> String.replace(",", "")
+    end)
+  end
+
 end
