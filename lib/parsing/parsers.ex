@@ -68,4 +68,31 @@ defmodule WealthPulse.Parsing.Parsers do
     |> map(fn chars -> {Enum.join(chars), :quoted} end)
   end
 
+  @doc """
+  Expects and parses a non-quoted symbol.
+
+      iex> import WealthPulse.Parsing.Parsers
+      iex> Combine.parse("AAPL", non_quoted_symbol)
+      [{"AAPL", :non_quoted}]
+      iex> Combine.parse("$", non_quoted_symbol)
+      [{"$", :non_quoted}]
+  """
+  def non_quoted_symbol do
+    many1(satisfy(char, fn c -> !(c in String.codepoints("-0123456789; \"\t\r\n")) end))
+    |> map(fn chars -> {Enum.join(chars), :non_quoted} end)
+  end
+
+  @doc ~S"""
+  Expects and parses a quoted or non-quoted symbol.
+
+      iex> import WealthPulse.Parsing.Parsers
+      iex> Combine.parse("$", symbol)
+      [{"$", :non_quoted}]
+      iex> Combine.parse("\"MUTF25\"", symbol)
+      [{"MUTF25", :quoted}]
+  """
+  def symbol do
+    either(quoted_symbol, non_quoted_symbol)
+  end
+
 end
