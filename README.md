@@ -27,7 +27,7 @@ Also TBD!
 ## Tasks
 
 Parsing
-- [ ] Parse pricedb file
+- [x] Parse pricedb file
 - [ ] Parse ledger file
 - [ ] Autobalance and validate ledger transactions
 - [ ] Parse configuration file
