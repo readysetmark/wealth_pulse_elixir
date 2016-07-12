@@ -1,7 +1,7 @@
 defmodule WealthPulse.Parse.Parsers do
   import Combine.Parsers.Base
   import Combine.Parsers.Text
-  alias WealthPulse.Core.{Amount, Symbol}
+  alias WealthPulse.Core.{Amount, Price, Symbol}
 
   # Whitespace Parsers
 
@@ -252,10 +252,10 @@ defmodule WealthPulse.Parse.Parsers do
 
       iex> import WealthPulse.Parse.Parsers
       iex> Combine.parse("P 2016-07-10 \"MUTF25\" $5.82", price)
-      [{
-        ~D[2016-07-10],
-        %WealthPulse.Core.Symbol{value: "MUTF25", quoted: true},
-        %WealthPulse.Core.Amount{
+      [%WealthPulse.Core.Price{
+        date: ~D[2016-07-10],
+        symbol: %WealthPulse.Core.Symbol{value: "MUTF25", quoted: true},
+        amount: %WealthPulse.Core.Amount{
           quantity: Decimal.new("5.82"),
           symbol: %WealthPulse.Core.Symbol{value: "$"},
           symbol_location: :left
@@ -272,7 +272,11 @@ defmodule WealthPulse.Parse.Parsers do
       ignore(mandatory_whitespace),
       amount
     ])
-    |> map(fn [date, symbol, amount] -> {date, symbol, amount} end)
+    |> map(fn [date, symbol, amount] -> %Price{
+      date: date,
+      symbol: symbol,
+      amount: amount
+    } end)
   end
 
   # Price DB Parser
@@ -284,10 +288,10 @@ defmodule WealthPulse.Parse.Parsers do
       iex> Combine.parse("", price_db)
       [[]]
       iex> Combine.parse("P 2016-07-10 \"MUTF25\" $5.82", price_db)
-      [[{
-        ~D[2016-07-10],
-        %WealthPulse.Core.Symbol{value: "MUTF25", quoted: true},
-        %WealthPulse.Core.Amount{
+      [[%WealthPulse.Core.Price{
+        date: ~D[2016-07-10],
+        symbol: %WealthPulse.Core.Symbol{value: "MUTF25", quoted: true},
+        amount: %WealthPulse.Core.Amount{
           quantity: Decimal.new("5.82"),
           symbol: %WealthPulse.Core.Symbol{value: "$"},
           symbol_location: :left
@@ -295,19 +299,19 @@ defmodule WealthPulse.Parse.Parsers do
       }]]
       iex> Combine.parse("P 2016-07-09 \"MUTF25\" $5.66\r\nP 2016-07-10 \"MUTF25\" $5.82", price_db)
       [[
-        {
-          ~D[2016-07-09],
-          %WealthPulse.Core.Symbol{value: "MUTF25", quoted: true},
-          %WealthPulse.Core.Amount{
+        %WealthPulse.Core.Price{
+          date: ~D[2016-07-09],
+          symbol: %WealthPulse.Core.Symbol{value: "MUTF25", quoted: true},
+          amount: %WealthPulse.Core.Amount{
             quantity: Decimal.new("5.66"),
             symbol: %WealthPulse.Core.Symbol{value: "$"},
             symbol_location: :left
           }
         },
-        {
-          ~D[2016-07-10],
-          %WealthPulse.Core.Symbol{value: "MUTF25", quoted: true},
-          %WealthPulse.Core.Amount{
+        %WealthPulse.Core.Price{
+          date: ~D[2016-07-10],
+          symbol: %WealthPulse.Core.Symbol{value: "MUTF25", quoted: true},
+          amount: %WealthPulse.Core.Amount{
             quantity: Decimal.new("5.82"),
             symbol: %WealthPulse.Core.Symbol{value: "$"},
             symbol_location: :left
