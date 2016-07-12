@@ -1,7 +1,7 @@
 defmodule WealthPulse.Parse.Parsers do
   import Combine.Parsers.Base
   import Combine.Parsers.Text
-  alias WealthPulse.Core.Symbol
+  alias WealthPulse.Core.{Amount, Symbol}
 
   # Whitespace Parsers
 
@@ -24,18 +24,18 @@ defmodule WealthPulse.Parse.Parsers do
 
       iex> import WealthPulse.Parse.Parsers
       iex> Combine.parse(" ", optional_whitespace)
-      [:whitespace]
+      [true]
       iex> Combine.parse("\t", optional_whitespace)
-      [:whitespace]
+      [true]
       iex> Combine.parse(" \t", optional_whitespace)
-      [:whitespace]
+      [true]
       iex> Combine.parse("", optional_whitespace)
-      [:no_whitespace]
+      [false]
   """
   def optional_whitespace do
     many(either(space, tab))
-    |> map(fn list when length(list) > 0 -> :whitespace
-              _ -> :no_whitespace end)
+    |> map(fn list when length(list) > 0 -> true
+              _ -> false end)
   end
 
   # Date Parsers
@@ -166,9 +166,18 @@ defmodule WealthPulse.Parse.Parsers do
 
       iex> import WealthPulse.Parse.Parsers
       iex> Combine.parse("$5.82", amount_symbol_then_quantity)
-      [{Decimal.new("5.82"), %WealthPulse.Core.Symbol{value: "$"}, :symbol_left, :no_whitespace}]
+      [%WealthPulse.Core.Amount{
+        quantity: Decimal.new("5.82"),
+        symbol: %WealthPulse.Core.Symbol{value: "$"},
+        symbol_location: :left
+      }]
       iex> Combine.parse("$ 5.82", amount_symbol_then_quantity)
-      [{Decimal.new("5.82"), %WealthPulse.Core.Symbol{value: "$"}, :symbol_left, :whitespace}]
+      [%WealthPulse.Core.Amount{
+        quantity: Decimal.new("5.82"),
+        symbol: %WealthPulse.Core.Symbol{value: "$"},
+        symbol_location: :left,
+        whitespace: true
+      }]
   """
   def amount_symbol_then_quantity do
     sequence([
@@ -176,7 +185,12 @@ defmodule WealthPulse.Parse.Parsers do
       optional_whitespace,
       quantity
     ])
-    |> map(fn [symbol, ws, qty] -> {qty, symbol, :symbol_left, ws} end)
+    |> map(fn [symbol, ws, qty] -> %Amount{
+      quantity: qty,
+      symbol: symbol,
+      symbol_location: :left,
+      whitespace: ws
+    } end)
   end
 
   @doc ~S"""
@@ -184,11 +198,18 @@ defmodule WealthPulse.Parse.Parsers do
 
       iex> import WealthPulse.Parse.Parsers
       iex> Combine.parse("5.82 \"MUTF25\"", amount_quantity_then_symbol)
-      [{Decimal.new("5.82"), %WealthPulse.Core.Symbol{value: "MUTF25", quoted: true},
-      :symbol_right, :whitespace}]
+      [%WealthPulse.Core.Amount{
+        quantity: Decimal.new("5.82"),
+        symbol: %WealthPulse.Core.Symbol{value: "MUTF25", quoted: true},
+        symbol_location: :right,
+        whitespace: true
+      }]
       iex> Combine.parse("5.82\"MUTF25\"", amount_quantity_then_symbol)
-      [{Decimal.new("5.82"), %WealthPulse.Core.Symbol{value: "MUTF25", quoted: true},
-      :symbol_right, :no_whitespace}]
+      [%WealthPulse.Core.Amount{
+        quantity: Decimal.new("5.82"),
+        symbol: %WealthPulse.Core.Symbol{value: "MUTF25", quoted: true},
+        symbol_location: :right
+      }]
   """
   def amount_quantity_then_symbol do
     sequence([
@@ -196,7 +217,12 @@ defmodule WealthPulse.Parse.Parsers do
       optional_whitespace,
       symbol
     ])
-    |> map(fn [qty, ws, symbol] -> {qty, symbol, :symbol_right, ws} end)
+    |> map(fn [qty, ws, symbol] -> %Amount{
+      quantity: qty,
+      symbol: symbol,
+      symbol_location: :right,
+      whitespace: ws
+    } end)
   end
 
   @doc ~S"""
@@ -204,10 +230,18 @@ defmodule WealthPulse.Parse.Parsers do
 
       iex> import WealthPulse.Parse.Parsers
       iex> Combine.parse("$5.82", amount)
-      [{Decimal.new("5.82"), %WealthPulse.Core.Symbol{value: "$"}, :symbol_left, :no_whitespace}]
+      [%WealthPulse.Core.Amount{
+        quantity: Decimal.new("5.82"),
+        symbol: %WealthPulse.Core.Symbol{value: "$"},
+        symbol_location: :left
+      }]
       iex> Combine.parse("5.82 \"MUTF25\"", amount)
-      [{Decimal.new("5.82"), %WealthPulse.Core.Symbol{value: "MUTF25", quoted: true},
-      :symbol_right, :whitespace}]
+      [%WealthPulse.Core.Amount{
+        quantity: Decimal.new("5.82"),
+        symbol: %WealthPulse.Core.Symbol{value: "MUTF25", quoted: true},
+        symbol_location: :right,
+        whitespace: true
+      }]
   """
   def amount, do: either(amount_symbol_then_quantity, amount_quantity_then_symbol)
 
@@ -218,8 +252,15 @@ defmodule WealthPulse.Parse.Parsers do
 
       iex> import WealthPulse.Parse.Parsers
       iex> Combine.parse("P 2016-07-10 \"MUTF25\" $5.82", price)
-      [{~D[2016-07-10], %WealthPulse.Core.Symbol{value: "MUTF25", quoted: true},
-      {Decimal.new("5.82"), %WealthPulse.Core.Symbol{value: "$"}, :symbol_left, :no_whitespace}}]
+      [{
+        ~D[2016-07-10],
+        %WealthPulse.Core.Symbol{value: "MUTF25", quoted: true},
+        %WealthPulse.Core.Amount{
+          quantity: Decimal.new("5.82"),
+          symbol: %WealthPulse.Core.Symbol{value: "$"},
+          symbol_location: :left
+        }
+      }]
   """
   def price do
     sequence([
@@ -243,16 +284,35 @@ defmodule WealthPulse.Parse.Parsers do
       iex> Combine.parse("", price_db)
       [[]]
       iex> Combine.parse("P 2016-07-10 \"MUTF25\" $5.82", price_db)
-      [[{~D[2016-07-10], %WealthPulse.Core.Symbol{value: "MUTF25", quoted: true},
-      {Decimal.new("5.82"), %WealthPulse.Core.Symbol{value: "$"}, :symbol_left, :no_whitespace}}]]
+      [[{
+        ~D[2016-07-10],
+        %WealthPulse.Core.Symbol{value: "MUTF25", quoted: true},
+        %WealthPulse.Core.Amount{
+          quantity: Decimal.new("5.82"),
+          symbol: %WealthPulse.Core.Symbol{value: "$"},
+          symbol_location: :left
+        }
+      }]]
       iex> Combine.parse("P 2016-07-09 \"MUTF25\" $5.66\r\nP 2016-07-10 \"MUTF25\" $5.82", price_db)
       [[
-        {~D[2016-07-09], %WealthPulse.Core.Symbol{value: "MUTF25", quoted: true},
-        {Decimal.new("5.66"), %WealthPulse.Core.Symbol{value: "$"}, :symbol_left,
-        :no_whitespace}},
-        {~D[2016-07-10], %WealthPulse.Core.Symbol{value: "MUTF25", quoted: true},
-        {Decimal.new("5.82"), %WealthPulse.Core.Symbol{value: "$"}, :symbol_left,
-        :no_whitespace}}
+        {
+          ~D[2016-07-09],
+          %WealthPulse.Core.Symbol{value: "MUTF25", quoted: true},
+          %WealthPulse.Core.Amount{
+            quantity: Decimal.new("5.66"),
+            symbol: %WealthPulse.Core.Symbol{value: "$"},
+            symbol_location: :left
+          }
+        },
+        {
+          ~D[2016-07-10],
+          %WealthPulse.Core.Symbol{value: "MUTF25", quoted: true},
+          %WealthPulse.Core.Amount{
+            quantity: Decimal.new("5.82"),
+            symbol: %WealthPulse.Core.Symbol{value: "$"},
+            symbol_location: :left
+          }
+        }
       ]]
   """
   def price_db, do: sep_by(price, newline)
