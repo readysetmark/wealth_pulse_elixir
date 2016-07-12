@@ -10,13 +10,14 @@ defmodule WealthPulse.Parse.Parsers do
 
       iex> import WealthPulse.Parse.Parsers
       iex> Combine.parse(" ", mandatory_whitespace)
-      [:whitespace]
+      [true]
       iex> Combine.parse("\t", mandatory_whitespace)
-      [:whitespace]
+      [true]
       iex> Combine.parse(" \t", mandatory_whitespace)
-      [:whitespace]
+      [true]
   """
-  def mandatory_whitespace, do: many1(either(space, tab)) |> map(fn _ -> :whitespace end)
+  @spec mandatory_whitespace :: Combine.parser()
+  def mandatory_whitespace, do: many1(either(space, tab)) |> map(fn _ -> true end)
 
   @doc """
   Expects and parses optional whitespace. Returns :whitespace if whitespace was found, otherwise
@@ -32,6 +33,7 @@ defmodule WealthPulse.Parse.Parsers do
       iex> Combine.parse("", optional_whitespace)
       [false]
   """
+  @spec optional_whitespace :: Combine.parser()
   def optional_whitespace do
     many(either(space, tab))
     |> map(fn list when length(list) > 0 -> true
@@ -47,6 +49,7 @@ defmodule WealthPulse.Parse.Parsers do
       ...> Combine.parse("2016", year)
       [2016]
   """
+  @spec year :: Combine.parser()
   def year, do: fixed_integer(4)
 
   @doc """
@@ -56,6 +59,7 @@ defmodule WealthPulse.Parse.Parsers do
       iex> Combine.parse("07", month)
       [7]
   """
+  @spec month :: Combine.parser()
   def month, do: fixed_integer(2)
 
   @doc """
@@ -65,6 +69,7 @@ defmodule WealthPulse.Parse.Parsers do
       iex> Combine.parse("09", day)
       [9]
   """
+  @spec day :: Combine.parser()
   def day, do: fixed_integer(2)
 
   @doc """
@@ -74,6 +79,7 @@ defmodule WealthPulse.Parse.Parsers do
       iex> Combine.parse("2016-07-09", date)
       [~D[2016-07-09]]
   """
+  @spec date :: Combine.parser()
   def date do
     sequence([
       year,
@@ -97,6 +103,7 @@ defmodule WealthPulse.Parse.Parsers do
       iex> Combine.parse("\"MUTF25\"", quoted_symbol)
       [%WealthPulse.Core.Symbol{value: "MUTF25", quoted: true}]
   """
+  @spec quoted_symbol :: Combine.parser()
   def quoted_symbol do
     sequence([
       ignore(char("\"")),
@@ -115,6 +122,7 @@ defmodule WealthPulse.Parse.Parsers do
       iex> Combine.parse("$", non_quoted_symbol)
       [%WealthPulse.Core.Symbol{value: "$"}]
   """
+  @spec non_quoted_symbol :: Combine.parser()
   def non_quoted_symbol do
     many1(satisfy(char, fn c -> !(c in String.codepoints("-0123456789; \"\t\r\n")) end))
     |> map(fn chars -> %Symbol{value: Enum.join(chars)} end)
@@ -129,6 +137,7 @@ defmodule WealthPulse.Parse.Parsers do
       iex> Combine.parse("\"MUTF25\"", symbol)
       [%WealthPulse.Core.Symbol{value: "MUTF25", quoted: true}]
   """
+  @spec symbol :: Combine.parser()
   def symbol, do: either(quoted_symbol, non_quoted_symbol)
 
   # Quantity parsers
@@ -142,6 +151,7 @@ defmodule WealthPulse.Parse.Parsers do
       iex> Combine.parse("-45.22", quantity)
       [Decimal.new("-45.22")]
   """
+  @spec quantity :: Combine.parser()
   def quantity do
     sequence([
       option(char("-"))
@@ -179,6 +189,7 @@ defmodule WealthPulse.Parse.Parsers do
         whitespace: true
       }]
   """
+  @spec amount_symbol_then_quantity :: Combine.parser()
   def amount_symbol_then_quantity do
     sequence([
       symbol,
@@ -211,6 +222,7 @@ defmodule WealthPulse.Parse.Parsers do
         symbol_location: :right
       }]
   """
+  @spec amount_quantity_then_symbol :: Combine.parser()
   def amount_quantity_then_symbol do
     sequence([
       quantity,
@@ -243,6 +255,7 @@ defmodule WealthPulse.Parse.Parsers do
         whitespace: true
       }]
   """
+  @spec amount :: Combine.parser()
   def amount, do: either(amount_symbol_then_quantity, amount_quantity_then_symbol)
 
   # Price Parser
@@ -262,6 +275,7 @@ defmodule WealthPulse.Parse.Parsers do
         }
       }]
   """
+  @spec price :: Combine.parser()
   def price do
     sequence([
       ignore(char("P")),
@@ -319,6 +333,7 @@ defmodule WealthPulse.Parse.Parsers do
         }
       ]]
   """
+  @spec price_db :: Combine.parser()
   def price_db, do: sep_by(price, newline)
 
 end
